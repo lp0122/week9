@@ -2,6 +2,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
   if (user) {
     // Signed in
     console.log('signed in')
+    // console.log(user)
 
     // Sign-out button
     document.querySelector('.sign-in-or-sign-out').innerHTML = `
@@ -22,12 +23,25 @@ firebase.auth().onAuthStateChanged(async function(user) {
       // Step 1:   POST fetch the create_post endpoint. Send the currently logged-in
       //           user's uid and username, and the image URL from the form in the 
       //           POST request's body.
+
+      let response = await fetch('/.netlify/functions/create_post', {
+        method: 'POST',
+        body: JSON.stringify({ // expects a string so need to stringify
+          uid: user.uid,
+          username: postUsername,
+          postImageUrl: postImageUrl
+        })
+      })
       // Step 2-5: Implement the lambda function in create_post.js
       // Step 6:   The lambda should return an Object of data with information on the
       //           the post, including the newly created post's ID. Set this to the 
       //           variable named "post", which is then passed on to the renderPost
       //           function below. 
       // 🔥🔥🔥 End Lab
+
+      let post = await response.json()
+      console.log(post)
+
       document.querySelector('#image-url').value = '' // clear the image url field
       renderPost(post)
     })
@@ -66,7 +80,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
 // {
 //   id: 'abcdefg',
 //   username: 'brian',
-//   imageURL: 'https://images.unsplash.com/...',
+//   imageUrl: 'https://images.unsplash.com/...',
 //   likes: 12,
 //   comments: [
 //     { username: 'brian', text: 'i love tacos!' },
@@ -109,11 +123,20 @@ async function renderPost(post) {
 
     // 🔥🔥🔥 Code-Along
     // POST fetch the like endpoint and test for success
+    let response = await fetch('/.netlify/functions/like', {
+      method: 'POST', //default method is GET
+      body: JSON.stringify({ // expects a string so need to stringify
+        postId: postId,
+        userId: currentUserId
+      })
+    })
     // 🔥🔥🔥 End Code-Along
 
-    let existingNumberOfLikes = document.querySelector(`.post-${postId} .likes`).innerHTML
-    let newNumberOfLikes = parseInt(existingNumberOfLikes) + 1
-    document.querySelector(`.post-${postId} .likes`).innerHTML = newNumberOfLikes
+    if (response.ok) {
+      let existingNumberOfLikes = document.querySelector(`.post-${postId} .likes`).innerHTML
+      let newNumberOfLikes = parseInt(existingNumberOfLikes) + 1
+      document.querySelector(`.post-${postId} .likes`).innerHTML = newNumberOfLikes
+    }
   })
 
   // listen for the post comment button on this post
